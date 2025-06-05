@@ -18,7 +18,7 @@ bot.command('summary', async ctx => {
   }
 
   const summary = await makeSummary(buf.join('\n'));
-  await ctx.reply(`#summary\n📝 Сводка (${buf.length} сообщений):\n\n${summary}`);
+  await ctx.reply(`#summary \n📝 Сводка (${buf.length} сообщений):\n\n${summary}`);
 
   // Пока не будем очищать буффер, чтобы можно было повторно получить сводку
   // buffers.set(chatId, []);
