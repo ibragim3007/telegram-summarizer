@@ -11,7 +11,7 @@ const SIZE = process.env.MESSAGES_SIZE || 100;
 
 // Команда /summary
 bot.command('summary', async ctx => {
-  const chatId = ctx.chat.id;
+  const { id: chatId } = ctx.chat;
   const buf = buffers.get(chatId);
 
   if (!buf || buf.length === 0) {
@@ -19,6 +19,8 @@ bot.command('summary', async ctx => {
   }
 
   const textBasic = buf.map(m => formatMessageForAI(m)).join('\n');
+
+
   const summary = await makeSummary(textBasic);
   await ctx.reply(`#summary \n📝 Сводка (${buf.length} сообщений):\n\n${summary}`, { parse_mode: 'Markdown' });
 
