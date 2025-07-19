@@ -39,7 +39,9 @@ bot.command('help', ctx => {
   ctx.reply(`👋 Привет! Я бот для создания сводок в групповых чатах.)
   \n\nВот что я умею:
   \n- /summary - Создать сводку из последних ${SIZE} сообщений.
+  \n- /last - Показать последнюю тему обсуждения.
   \n- /clear - Очистить буфер сводки.
+  \n- /sosal - Случайно выбрать пользователя 🍭
   \n- Просто напиши сообщение, и я буду собирать их для сводки.
   \n\nЯ использую Google Gemini Pro для создания сводок. Просто напиши что-нибудь в чате, и я соберу информацию для сводки.`);
 });
@@ -61,6 +63,46 @@ bot.command('last', async ctx => {
   await ctx.reply(`#last \n🧠 Последняя тема обсуждения:\n\n${analysis}`, {
     parse_mode: 'Markdown'
   });
+});
+
+bot.command('sosal', async ctx => {
+  const chatId = ctx.chat.id;
+  const buf = buffers.get(chatId);
+
+  if (!buf || buf.length === 0) {
+    return ctx.reply('📭 Буфер пуст. Пока некого выбирать.');
+  }
+
+  // Получаем уникальных пользователей из буфера
+  const uniqueUsers = [];
+  const seenUserIds = new Set();
+
+  for (const msg of buf) {
+    if (!seenUserIds.has(msg.userId)) {
+      seenUserIds.add(msg.userId);
+      uniqueUsers.push({
+        displayName: msg.displayName || msg.username || 'Аноним',
+        username: msg.username
+      });
+    }
+  }
+
+  if (uniqueUsers.length === 0) {
+    return ctx.reply('🤷‍♂️ Не найдено пользователей в буфере.');
+  }
+
+  // Случайно выбираем пользователя
+  const randomUser = uniqueUsers[Math.floor(Math.random() * uniqueUsers.length)];
+
+  // Получаем контекст чата для генерации шутки
+  const chatText = buf.slice(-20).map(m => formatMessageForAI(m)).join('\n');
+
+  // Сначала отправляем основное сообщение
+  await ctx.reply(`${randomUser.displayName} – сосал 🍭`);
+
+  // Затем генерируем и отправляем шутку
+  const joke = await makeSosalJoke(randomUser.displayName, chatText);
+  await ctx.reply(joke, { parse_mode: 'Markdown' });
 });
 // Приём сообщений
 bot.on('message', async ctx => {
@@ -167,6 +209,38 @@ async function makeTopicSummary(text) {
   }
 }
 
+async function makeSosalJoke(userName, chatText) {
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${googleGeminiApi}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: getSosalJokePrompt(userName, chatText),
+              }
+            ]
+          }
+        ]
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+      return data.candidates[0].content.parts[0].text.trim();
+    } else {
+      console.error('⚠️ Gemini API error:', data);
+      return '😏 *молчаливо ухмыляется*';
+    }
+  } catch (error) {
+    console.error('❌ Ошибка Gemini:', error);
+    return '🤖 *сломался от смеха*';
+  }
+}
+
 const getPromptV2 = (text) => `
 Ты — бот Telegram, анализирующий последние сообщения в чате.
 На основе сообщений ниже кратко определи, о чём шло обсуждение:
@@ -267,6 +341,23 @@ const getLastTopicPrompt = (text) => `
 
 Сообщения:
 ${text}
+`;
+
+const getSosalJokePrompt = (userName, chatText) => `
+Ты — злобный и остроумный бот в Telegram чате. Только что случайно выбрали пользователя "${userName}" для шуточной фразы "${userName} - сосал".
+
+Твоя задача: написать короткую (1-2 предложения), смешную и слегка оскорбительную шутку про этого пользователя, основываясь на стиле общения в чате.
+
+Требования:
+- Используй стиль общения участников чата
+- Можешь быть грубым и саркастичным  
+- Шутка должна быть смешной и жестокой
+- 1-2 предложения максимум
+- Используй эмодзи для усиления эффекта
+- Можешь играть на особенностях речи или поведении пользователя из истории чата
+
+Контекст чата:
+${chatText}
 `;
 
 
