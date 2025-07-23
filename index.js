@@ -176,7 +176,8 @@ bot.command('stats', async ctx => {
 
   try {
     const stats = await generateChatStats(buf);
-    await safeReply(ctx, `📈 **Статистика чата:**\n\n${stats}`, { parse_mode: 'Markdown' });
+    const sanitizedStats = sanitizeMarkdown(stats);
+    await safeReply(ctx, sanitizedStats, { parse_mode: 'Markdown' });
   } catch (error) {
     console.error('❌ Ошибка команды /stats:', error);
     await ctx.reply('❗ Произошла ошибка при анализе статистики.');
@@ -209,7 +210,6 @@ bot.on('message', async ctx => {
     const last10Messages = buf.slice(-10).map(m => formatMessageForAI(m)).join('\n');
     const taskAnalysis = await analyzeForTasks(last10Messages);
 
-    console.log(taskAnalysis)
 
     if (taskAnalysis.hasTask && taskAnalysis.priority === 'high') {
       const taskData = {
@@ -851,6 +851,7 @@ ${stats.topUsers.map((user, index) =>
 - Добавь немного юмора если уместно
 - Максимум 10-12 строк
 
+Используй markdown для форматирования текста, чтобы выделить важные моменты и улучшить читаемость.
 Отвечай на русском языке.
 `;
 
@@ -889,6 +890,7 @@ function sanitizeMarkdown(text) {
 }
 
 async function safeReply(ctx, text, options = {}) {
+  console.log(options)
   try {
     // Сначала пробуем с Markdown
     if (options.parse_mode === 'Markdown') {
