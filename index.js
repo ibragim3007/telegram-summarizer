@@ -131,7 +131,14 @@ bot.command('tasks', async ctx => {
     message += `   📅 ${date}\n\n`;
   });
 
-  await ctx.reply(message, { parse_mode: 'Markdown' });
+  await ctx.reply(message, {
+    parse_mode: 'Markdown',
+    reply_markup: {
+      inline_keyboard: [[
+        { text: '🗑️ Очистить все задачи', callback_data: `clear_tasks_${chatId}` }
+      ]]
+    }
+  });
 });
 // Приём сообщений
 bot.on('message', async ctx => {
@@ -248,6 +255,59 @@ bot.on('callback_query', async ctx => {
       console.error('❌ Ошибка обработки callback:', error);
       await ctx.answerCbQuery('❌ Ошибка обработки');
     }
+  }
+
+  if (data.startsWith('clear_tasks_')) {
+    const chatId = parseInt(data.replace('clear_tasks_', ''));
+
+    // Показываем подтверждение
+    await ctx.editMessageText(
+      '⚠️ **Подтверждение удаления**\n\n' +
+      '🗑️ Вы уверены, что хотите удалить ВСЕ задачи?\n' +
+      '📝 Это действие нельзя отменить!',
+      {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: '✅ Да, удалить все', callback_data: `confirm_clear_${chatId}` },
+              { text: '❌ Отмена', callback_data: `cancel_clear_${chatId}` }
+            ]
+          ]
+        }
+      }
+    );
+  }
+
+  if (data.startsWith('confirm_clear_')) {
+    const chatId = parseInt(data.replace('confirm_clear_', ''));
+
+    try {
+      const success = await clearTasksFromFile(chatId);
+
+      if (success) {
+        await ctx.answerCbQuery('🗑️ Все задачи удалены!');
+        await ctx.editMessageText(
+          '✅ **Все задачи удалены!**\n\n' +
+          '📝 Список задач для этого чата очищен.',
+          { parse_mode: 'Markdown' }
+        );
+      } else {
+        await ctx.answerCbQuery('❌ Ошибка при удалении');
+      }
+    } catch (error) {
+      console.error('❌ Ошибка удаления задач:', error);
+      await ctx.answerCbQuery('❌ Ошибка обработки');
+    }
+  }
+
+  if (data.startsWith('cancel_clear_')) {
+    await ctx.answerCbQuery('❌ Отменено');
+    await ctx.editMessageText(
+      '❌ **Очистка отменена**\n\n' +
+      '📝 Задачи остались без изменений.',
+      { parse_mode: 'Markdown' }
+    );
   }
 });
 
@@ -435,6 +495,21 @@ async function getTasksFromFile(chatId) {
     return JSON.parse(fileContent);
   } catch (error) {
     return [];
+  }
+}
+
+async function clearTasksFromFile(chatId) {
+  try {
+    const tasksDir = path.join(process.cwd(), 'tasks');
+    const fileName = `chat_${chatId}_tasks.json`;
+    const filePath = path.join(tasksDir, fileName);
+
+    // Записываем пустой массив в файл
+    await fs.writeFile(filePath, JSON.stringify([], null, 2));
+    return true;
+  } catch (error) {
+    console.error('❌ Ошибка очистки задач:', error);
+    return false;
   }
 }
 
