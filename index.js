@@ -46,6 +46,7 @@ bot.command('help', ctx => {
   \n- /summary - Создать сводку из сообщений в буфере.
   \n- /last - Показать последнюю тему обсуждения.
   \n- /tasks - Показать все сохраненные задачи.
+  \n- /stats - Показать статистику активности чата.
   \n- /s {текст} - Задать любой вопрос Gemini AI.
   \n- /clear - Очистить буфер сводки.
   \n- /sosal - Случайно выбрать пользователя 🍭
@@ -159,6 +160,26 @@ bot.command('s', async ctx => {
   } catch (error) {
     console.error('❌ Ошибка команды /s:', error);
     await ctx.reply('❗ Произошла ошибка при обращении к Gemini.');
+  }
+});
+
+bot.command('stats', async ctx => {
+  const chatId = ctx.chat.id;
+  const buf = buffers.get(chatId);
+
+  if (!buf || buf.length === 0) {
+    return ctx.reply('📭 Буфер пуст. Пока нет данных для статистики.');
+  }
+
+  // Показываем что бот анализирует
+  await ctx.reply('📊 Анализирую статистику чата...');
+
+  try {
+    const stats = await generateChatStats(buf);
+    await safeReply(ctx, `📈 **Статистика чата:**\n\n${stats}`, { parse_mode: 'Markdown' });
+  } catch (error) {
+    console.error('❌ Ошибка команды /stats:', error);
+    await ctx.reply('❗ Произошла ошибка при анализе статистики.');
   }
 });
 // Приём сообщений
@@ -462,6 +483,93 @@ async function makeSimpleGeminiRequest(text) {
   }
 }
 
+async function generateChatStats(messages) {
+  try {
+    // Подготавливаем базовую статистику
+    const userStats = {};
+    const timeStats = {};
+    const totalMessages = messages.length;
+    let totalWords = 0;
+    let totalCharacters = 0;
+
+    // Анализируем сообщения
+    messages.forEach(msg => {
+      // Статистика пользователей
+      const userName = msg.displayName || msg.username || 'Аноним';
+      if (!userStats[userName]) {
+        userStats[userName] = { count: 0, words: 0, chars: 0 };
+      }
+      userStats[userName].count++;
+
+      const words = msg.text.split(/\s+/).length;
+      const chars = msg.text.length;
+
+      userStats[userName].words += words;
+      userStats[userName].chars += chars;
+      totalWords += words;
+      totalCharacters += chars;
+
+      // Статистика по времени (час дня)
+      const date = new Date(msg.date * 1000);
+      const hour = date.getHours();
+      timeStats[hour] = (timeStats[hour] || 0) + 1;
+    });
+
+    // Находим самый активный час
+    const mostActiveHour = Object.entries(timeStats)
+      .sort(([, a], [, b]) => b - a)[0];
+
+    // Топ пользователей по сообщениям
+    const topUsers = Object.entries(userStats)
+      .sort(([, a], [, b]) => b.count - a.count)
+      .slice(0, 5);
+
+    // Создаем запрос для ИИ
+    const aiPrompt = getStatsPrompt({
+      totalMessages,
+      totalWords,
+      totalCharacters,
+      avgWordsPerMessage: Math.round(totalWords / totalMessages),
+      avgCharsPerMessage: Math.round(totalCharacters / totalMessages),
+      topUsers: topUsers.map(([name, stats]) => ({
+        name,
+        messages: stats.count,
+        avgWords: Math.round(stats.words / stats.count)
+      })),
+      mostActiveHour: mostActiveHour ? `${mostActiveHour[0]}:00 (${mostActiveHour[1]} сообщений)` : 'Нет данных',
+      uniqueUsers: Object.keys(userStats).length
+    });
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${googleGeminiApi}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: aiPrompt,
+              }
+            ]
+          }
+        ]
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+      return data.candidates[0].content.parts[0].text.trim();
+    } else {
+      console.error('⚠️ Gemini API error:', data);
+      return '⚠️ Не удалось создать статистику.';
+    }
+  } catch (error) {
+    console.error('❌ Ошибка генерации статистики:', error);
+    return '❗ Ошибка при создании статистики.';
+  }
+}
+
 async function analyzeForTasks(messages) {
   try {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${googleGeminiApi}`, {
@@ -716,6 +824,34 @@ const getTaskDetectionPrompt = (messages) => `
 
 Сообщения для анализа:
 ${messages}
+`;
+
+const getStatsPrompt = (stats) => `
+Ты — аналитик Telegram чата. Создай красивую и информативную статистику на основе данных:
+
+📊 Общая статистика:
+- Всего сообщений: ${stats.totalMessages}
+- Всего слов: ${stats.totalWords}
+- Всего символов: ${stats.totalCharacters}
+- Среднее слов в сообщении: ${stats.avgWordsPerMessage}
+- Среднее символов в сообщении: ${stats.avgCharsPerMessage}
+- Уникальных пользователей: ${stats.uniqueUsers}
+- Самый активный час: ${stats.mostActiveHour}
+
+👥 Топ пользователей по активности:
+${stats.topUsers.map((user, index) =>
+  `${index + 1}. ${user.name}: ${user.messages} сообщений (среднее ${user.avgWords} слов)`
+).join('\n')}
+
+Твоя задача:
+- Создай красивую статистику с эмодзи
+- Добавь интересные наблюдения и выводы
+- Используй Markdown форматирование
+- Будь кратким но информативным
+- Добавь немного юмора если уместно
+- Максимум 10-12 строк
+
+Отвечай на русском языке.
 `;
 
 
