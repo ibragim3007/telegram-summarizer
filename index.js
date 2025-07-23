@@ -46,6 +46,7 @@ bot.command('help', ctx => {
   \n- /summary - Создать сводку из последних ${SIZE} сообщений.
   \n- /last - Показать последнюю тему обсуждения.
   \n- /tasks - Показать все сохраненные задачи.
+  \n- /s {текст} - Задать любой вопрос Gemini AI.
   \n- /clear - Очистить буфер сводки.
   \n- /sosal - Случайно выбрать пользователя 🍭
   \n- Просто напиши сообщение, и я буду собирать их для сводки.
@@ -139,6 +140,26 @@ bot.command('tasks', async ctx => {
       ]]
     }
   });
+});
+
+bot.command('s', async ctx => {
+  const input = ctx.message.text;
+  const query = input.substring(2).trim(); // Убираем "/s" и пробелы
+
+  if (!query) {
+    return ctx.reply('💭 Использование: /s ваш вопрос к Gemini\n\nПример: /s Расскажи анекдот');
+  }
+
+  // Показываем что бот думает
+  await ctx.reply('🤔 Думаю...');
+
+  try {
+    const response = await makeSimpleGeminiRequest(query);
+    await safeReply(ctx, `🤖 **Gemini отвечает:**\n\n${response}`, { parse_mode: 'Markdown' });
+  } catch (error) {
+    console.error('❌ Ошибка команды /s:', error);
+    await ctx.reply('❗ Произошла ошибка при обращении к Gemini.');
+  }
 });
 // Приём сообщений
 bot.on('message', async ctx => {
@@ -409,6 +430,38 @@ async function makeSosalJoke(userName, chatText) {
   } catch (error) {
     console.error('❌ Ошибка Gemini:', error);
     return '🤖 *сломался от смеха*';
+  }
+}
+
+async function makeSimpleGeminiRequest(text) {
+  try {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${googleGeminiApi}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: `Отвечай кратко и по делу. Максимум 2-3 предложения.\n\n${text}`,
+              }
+            ]
+          }
+        ]
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+      return data.candidates[0].content.parts[0].text.trim();
+    } else {
+      console.error('⚠️ Gemini API error:', data);
+      return '⚠️ Не удалось получить ответ от Gemini.';
+    }
+  } catch (error) {
+    console.error('❌ Ошибка Gemini:', error);
+    return '❗ Ошибка при обращении к Gemini API.';
   }
 }
 
