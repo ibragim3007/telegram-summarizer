@@ -235,8 +235,9 @@ bot.on('message', async ctx => {
 
   const summary = await makeSummary(textBasic);
 
+  const fixedSummary = sanitizeMarkdown(summary);
 
-  await safeReply(ctx, `📝 Авто-сводка (${SIZE} сообщений):\n\n${summary}`, {
+  await safeReply(ctx, `📝 Авто-сводка (${SIZE} сообщений):\n\n${fixedSummary}`, {
     parse_mode: 'Markdown'
   });
 });
