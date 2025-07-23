@@ -4,6 +4,7 @@ import 'dotenv/config';
 import process from 'node:process';
 import fs from 'fs/promises';
 import path from 'path';
+import { parse } from 'node:path';
 
 const bot = new Telegraf(process.env.TELEGRAM_API);
 const googleGeminiApi = process.env.GOOGLE_GEMINI_API; // Google API Key
@@ -25,8 +26,8 @@ bot.command('summary', async ctx => {
   const textBasic = buf.map(m => formatMessageForAI(m)).join('\n');
 
   const summary = await makeSummary(textBasic);
-  const cleanSummary = sanitizeMarkdown(summary);
-  await safeReply(ctx, `#summary \n📝 Сводка (${buf.length} сообщений):\n\n${cleanSummary}`, { parse_mode: 'Markdown' });
+
+  await safeReply(ctx, `#summary \n📝 Сводка (${buf.length} сообщений):\n\n${summary}`, { parse_mode: 'Markdown' });
 
   // Пока не будем очищать буффер, чтобы можно было повторно получить сводку
   // buffers.set(chatId, []);
@@ -65,9 +66,9 @@ bot.command('last', async ctx => {
   const textBasic = lastMessages.map(m => formatMessageForAI(m)).join('\n');
 
   const analysis = await makeTopicSummary(textBasic);
-  const cleanAnalysis = sanitizeMarkdown(analysis);
+  ;
 
-  await safeReply(ctx, `#last \n🧠 Последняя тема обсуждения:\n\n${cleanAnalysis}`, {
+  await safeReply(ctx, `#last \n🧠 Последняя тема обсуждения:\n\n${analysis}`, {
     parse_mode: 'Markdown'
   });
 });
@@ -109,8 +110,8 @@ bot.command('sosal', async ctx => {
 
   // Затем генерируем и отправляем шутку
   const joke = await makeSosalJoke(randomUser.displayName, chatText);
-  const cleanJoke = sanitizeMarkdown(joke);
-  await safeReply(ctx, cleanJoke, { parse_mode: 'Markdown' });
+
+  await safeReply(ctx, joke, { parse_mode: 'Markdown' });
 });
 
 bot.command('tasks', async ctx => {
@@ -171,6 +172,7 @@ bot.on('message', async ctx => {
       const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
       pendingTasks.set(taskId, taskData);
 
+
       // Удаляем задачу через 10 минут, если она не была сохранена
       setTimeout(() => {
         pendingTasks.delete(taskId);
@@ -202,9 +204,9 @@ bot.on('message', async ctx => {
   const textBasic = buf.map(m => formatMessageForAI(m)).join('\n');
 
   const summary = await makeSummary(textBasic);
-  const cleanSummary = sanitizeMarkdown(summary);
 
-  await safeReply(ctx, `📝 Авто-сводка (${SIZE} сообщений):\n\n${cleanSummary}`, {
+
+  await safeReply(ctx, `📝 Авто-сводка (${SIZE} сообщений):\n\n${summary}`, {
     parse_mode: 'Markdown'
   });
 });
@@ -618,17 +620,17 @@ async function safeReply(ctx, text, options = {}) {
   try {
     // Сначала пробуем с Markdown
     if (options.parse_mode === 'Markdown') {
-      const cleanText = sanitizeMarkdown(text);
-      await ctx.reply(cleanText, options);
+      await ctx.reply(text, options);
     } else {
       await ctx.reply(text, options);
     }
   } catch (error) {
     console.error('❌ Ошибка отправки с Markdown, отправляем без форматирования:', error);
     // Если не получилось с Markdown, отправляем без форматирования
+    const cleanText = sanitizeMarkdown(text);
     const optionsWithoutMarkdown = { ...options };
     delete optionsWithoutMarkdown.parse_mode;
-    await ctx.reply(text, optionsWithoutMarkdown);
+    await ctx.reply(cleanText, optionsWithoutMarkdown);
   }
 }
 
