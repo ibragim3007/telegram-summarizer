@@ -1,17 +1,19 @@
 {
   "name": "telegram-summarizer",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Telegram bot for chat summarization with AI",
+  "main": "index-new.js",
   "type": "module",
   "scripts": {
+    "start": "node index-new.js",
+    "dev": "node index-new.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "dotenv": "^16.5.0",
-    "openai": "^5.1.1",
+    "node-fetch": "^3.3.2",
     "telegraf": "^4.16.3"
   },
   "devDependencies": {
