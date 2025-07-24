@@ -8,6 +8,7 @@ import { setupSimpleQueryCommand } from './simple.js';
 import { setupStatsCommand } from './stats.js';
 import { setupPredictCommand } from './predict.js';
 import { setupPollCommand } from './poll.js';
+import { setupMemeCommand } from './meme.js';
 import { setupRemindCommand } from './remind.js';
 import { setupMessageHandler } from './messages.js';
 import { setupCallbackHandler } from './callbacks.js';
@@ -24,6 +25,7 @@ export function setupAllCommands(bot) {
   setupStatsCommand(bot);
   setupPredictCommand(bot);
   setupPollCommand(bot);
+  setupMemeCommand(bot);
   setupRemindCommand(bot);
 
   // Обработчики
