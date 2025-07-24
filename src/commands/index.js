@@ -6,6 +6,7 @@ import { setupSosalCommand } from './sosal.js';
 import { setupTasksCommand } from './tasks.js';
 import { setupSimpleQueryCommand } from './simple.js';
 import { setupStatsCommand } from './stats.js';
+import { setupPredictCommand } from './predict.js';
 import { setupMessageHandler } from './messages.js';
 import { setupCallbackHandler } from './callbacks.js';
 
@@ -19,6 +20,7 @@ export function setupAllCommands(bot) {
   setupTasksCommand(bot);
   setupSimpleQueryCommand(bot);
   setupStatsCommand(bot);
+  setupPredictCommand(bot);
 
   // Обработчики
   setupMessageHandler(bot);

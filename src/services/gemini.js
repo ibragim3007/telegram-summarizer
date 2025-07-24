@@ -80,6 +80,11 @@ class GeminiService {
     const result = await this.makeRequest(prompt);
     return result || '⚠️ Не удалось получить ответ от Gemini.';
   }
+
+  async generatePrediction(prompt) {
+    const result = await this.makeRequest(prompt);
+    return result || '⚠️ Не удалось предсказать развитие чата.';
+  }
 }
 
 export const geminiService = new GeminiService();
