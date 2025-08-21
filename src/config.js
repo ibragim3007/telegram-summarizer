@@ -9,6 +9,10 @@ export const config = {
     apiKey: process.env.GOOGLE_GEMINI_API,
     model: 'gemini-2.0-flash',
   },
+  imgflip: {
+    username: process.env.IMGFLIP_USERNAME || 'imgflip_hubot',
+    password: process.env.IMGFLIP_PASSWORD || 'imgflip_hubot',
+  },
   buffer: {
     maxSize: parseInt(process.env.MESSAGES_SIZE) || 1000,
     taskCheckInterval: 10, // проверка задач каждые 10 сообщений

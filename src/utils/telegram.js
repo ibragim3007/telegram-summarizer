@@ -1,3 +1,6 @@
+import fetch from 'node-fetch';
+import { Buffer } from 'node:buffer';
+
 export function formatMessageForAI(msg) {
   const date = new Date(msg.date * 1000).toLocaleString('ru-RU');
   return `[${msg.displayName || msg.username} | ${date} | ${msg.link}]: ${msg.text}`;
@@ -48,6 +51,63 @@ export async function safeReply(ctx, text, options = {}) {
     const optionsWithoutMarkdown = { ...options };
     delete optionsWithoutMarkdown.parse_mode;
     await ctx.reply(cleanText, optionsWithoutMarkdown);
+  }
+}
+
+// Безопасная отправка фото с подписью: пробуем с заданным parse_mode,
+// при ошибке очищаем подпись и отправляем без форматирования
+export async function safeReplyWithPhoto(ctx, photo, options = {}) {
+  try {
+    // Если это memegen URL — сразу скачиваем и отправляем как буфер,
+    // чтобы Telegram не пытался сам тянуть по URL (что иногда падает)
+    if (typeof photo === 'string' && /https?:\/\/api\.memegen\.link\//i.test(photo)) {
+      const res = await fetch(photo);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const arrayBuffer = await res.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      const opt = { ...options };
+      await ctx.replyWithPhoto({ source: buffer, filename: 'meme.jpg' }, opt);
+      return;
+    }
+
+    await ctx.replyWithPhoto(photo, options);
+  } catch (error) {
+    console.error('❌ Ошибка отправки фото (возможно, из‑за Markdown):', error);
+    const cleanOptions = { ...options };
+    if (cleanOptions.caption) {
+      cleanOptions.caption = sanitizeMarkdown(cleanOptions.caption);
+    }
+    delete cleanOptions.parse_mode;
+    try {
+      // Повторяем попытку: если URL memegen — отправляем как буфер
+      if (typeof photo === 'string' && /https?:\/\/api\.memegen\.link\//i.test(photo)) {
+        const res = await fetch(photo);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const arrayBuffer = await res.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
+        await ctx.replyWithPhoto({ source: buffer, filename: 'meme.jpg' }, cleanOptions);
+      } else {
+        await ctx.replyWithPhoto(photo, cleanOptions);
+      }
+    } catch (secondError) {
+      console.error('❌ Повторная ошибка отправки фото, пробуем загрузить файл напрямую:', secondError);
+      // Последняя попытка: скачать картинку и отправить как файл-источник (если это URL)
+      try {
+        if (typeof photo === 'string' && /^https?:\/\//i.test(photo)) {
+          const res = await fetch(photo);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const arrayBuffer = await res.arrayBuffer();
+          const buffer = Buffer.from(arrayBuffer);
+          await ctx.replyWithPhoto({ source: buffer }, cleanOptions);
+        } else {
+          throw secondError;
+        }
+      } catch (downloadError) {
+        console.error('❌ Не удалось отправить фото даже после скачивания:', downloadError);
+        // Бросаем дальше, чтобы вызывающая сторона могла сделать текстовый фолбэк
+        throw downloadError;
+      }
+    }
   }
 }
 

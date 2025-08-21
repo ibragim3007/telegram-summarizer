@@ -161,45 +161,33 @@ ${text}
 `;
 
 export const memePrompt = (text) => `
-Ты — креативный мем-генератор для Telegram чата. Создай смешной мем на основе обсуждения.
+Ты — креативный мем-генератор для Telegram чата. По сообщениям ниже выбери шаблон и сгенерируй мем так, чтобы текст был НАРИСОВАН НА КАРТИНКЕ (не в подписи).
 
-Проанализируй сообщения и создай мем, выбрав подходящий шаблон из популярных мемов:
+Используй ТОЛЬКО эти шаблоны memegen.link (slug), их очень много и они уже известны боту:
+ aag, ackbar, afraid, agnes, aint-got-time, ams, ants, apcr, astronaut, atis, away, awesome, awesome-awkward, awkward, awkward-awesome, bad, badchoice, balloon, bd, because, bender, bihw, bilbo, biw, blb, boat, bongo, both, box, bs, bus, buzz, cake, captain, captain-america, cb, cbb, cbg, center, ch, chair, cheems, chosen, cmm, country, crazypills, crow, cryingfloor, db, dbg, dg, disastergirl, dodgson, doge, dragon, drake, drowning, drunk, ds, dsm, dwight, elf, elmo, ermg, exit, fa, facepalm, fbf, feelsgood, fetch, fine, firsttry, fmr, friends, fry, fwp, gandalf, gb, gears, genie, ggg, glasses, gone, grave, gru, grumpycat, hagrid, handshake, happening, harold, headaches, hipster, home, icanhas, imsorry, inigo, interesting, ive, iw, jd, jetpack, jim, joker, jw, keanu, kermit, khaby-lame, kk, kombucha, kramer, leo, light
 
-ДОСТУПНЫЕ ШАБЛОНЫ (ID и описание):
-- 181913649: Drake - две панели (что не нравится / что нравится)
-- 87743020: Two Buttons - сложный выбор между двумя вариантами  
-- 112126428: Distracted Boyfriend - парень смотрит на другую девушку
-- 93895088: Expanding Brain - от простой к сложной идее (4 уровня)
-- 102156234: Mocking SpongeBob - саркастичное повторение
-- 4087833: Waiting Skeleton - долгое ожидание чего-то
-- 61579: One Does Not Simply - "Нельзя просто так взять и..."
-- 124822590: Left Exit 12 Off Ramp - неожиданный поворот в разговоре
-- 131087935: Running Away Balloon - что-то ускользает/теряется
-- 178591752: Tuxedo Winnie The Pooh - обычный vs элегантный способ
+Правила текста для линий (на картинке):
+- Коротко и по делу, максимум ~50 символов на линию
+- Без переносов строк и излишних эмодзи внутри линий (эмодзи можно в описании)
+- Русский язык, понятный участникам чата
+- Для 3 линий используй: topText (верх), extraText (середина), bottomText (низ)
+- Для gb (4 линии): заполни topText, extraText и bottomText; четвертая линия может быть пустой
 
-Требования:
-- Найди самый смешной/интересный момент из обсуждения
-- Выбери ПОДХОДЯЩИЙ шаблон из списка выше
-- Создай короткий текст для каждой панели мема (максимум 50 символов на панель)
-- Мем должен быть понятен участникам чата
-
-ОБЯЗАТЕЛЬНО отвечай в формате JSON:
-
-Если можно создать мем:
+Верни ТОЛЬКО JSON (без пояснений, без Markdown-блоков), строго по схеме:
 {
   "hasMeme": true,
-  "templateId": "181913649",
-  "templateName": "Drake",
+  "templateId": "string",        // slug из списка выше ИЛИ legacy ID из чата
+  "templateName": "string",       // человекочитаемое имя
   "topText": "Текст верхней панели",
   "bottomText": "Текст нижней панели",
-  "extraText": "Дополнительный текст (только для шаблонов с 3+ панелями)",
-  "description": "Краткое описание мема"
+  "extraText": "Текст средней панели (для 3+ линий)",
+  "description": "Краткое объяснение шутки (можно с эмодзи)"
 }
 
 Если нет подходящего контента:
 {
   "hasMeme": false,
-  "reason": "Причина отсутствия мема"
+  "reason": "Почему не получилось"
 }
 
 Сообщения для анализа:

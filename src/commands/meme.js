@@ -2,7 +2,7 @@ import { bufferService } from '../storage/buffer.js';
 import { geminiService } from '../services/gemini.js';
 import { imgFlipService } from '../services/imgflip.js';
 import { memePrompt } from '../prompts/index.js';
-import { formatMessageForAI, safeReply } from '../utils/telegram.js';
+import { formatMessageForAI, safeReply, safeReplyWithPhoto } from '../utils/telegram.js';
 
 export function setupMemeCommand(bot) {
   bot.command('meme', async (ctx) => {
@@ -47,6 +47,8 @@ export function setupMemeCommand(bot) {
         return safeReply(ctx, fallbackMessage, { parse_mode: 'Markdown' });
       }
 
+
+      console.log(memeData);
       // Проверяем, что у нас есть нужные данные для ImgFlip
       if (!memeData.templateId || !imgFlipService.isValidTemplate(memeData.templateId)) {
         // Fallback к текстовому мему
@@ -65,8 +67,10 @@ export function setupMemeCommand(bot) {
           memeData.extraText
         );
 
-        // Отправляем мем-картинку
-        await ctx.replyWithPhoto(memeUrl, {
+        console.log(memeUrl)
+
+        // Отправляем мем-картинку (безопасно, с ретраем без Markdown при ошибке)
+        await safeReplyWithPhoto(ctx, memeUrl, {
           caption: `🎭 **Мем дня** (${memeData.templateName || 'Custom'})\n\n_${memeData.description || `На основе анализа ${buf.length} сообщений`}_ 😄`,
           parse_mode: 'Markdown'
         });
