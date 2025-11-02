@@ -12,6 +12,7 @@ import { setupMemeCommand } from './meme.js';
 import { setupRemindCommand } from './remind.js';
 import { setupMessageHandler } from './messages.js';
 import { setupCallbackHandler } from './callbacks.js';
+import { setupContextCommand } from './context.js';
 
 export function setupAllCommands(bot) {
   // Команды
@@ -27,6 +28,7 @@ export function setupAllCommands(bot) {
   setupPollCommand(bot);
   setupMemeCommand(bot);
   setupRemindCommand(bot);
+  setupContextCommand(bot);
 
   // Обработчики
   setupMessageHandler(bot);
