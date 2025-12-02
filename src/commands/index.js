@@ -13,8 +13,9 @@ import { setupRemindCommand } from './remind.js';
 import { setupMessageHandler } from './messages.js';
 import { setupCallbackHandler } from './callbacks.js';
 import { setupContextCommand } from './context.js';
+import { psychoCommand } from './psycho.js';
 
-export function setupAllCommands(bot) {
+export const setupAllCommands = (bot) => {
   // Команды
   setupSummaryCommand(bot);
   setupClearCommand(bot);
@@ -29,8 +30,9 @@ export function setupAllCommands(bot) {
   setupMemeCommand(bot);
   setupRemindCommand(bot);
   setupContextCommand(bot);
+  bot.command('psycho', psychoCommand);
 
   // Обработчики
   setupMessageHandler(bot);
   setupCallbackHandler(bot);
-}
+};
