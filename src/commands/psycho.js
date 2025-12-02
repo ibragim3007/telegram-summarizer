@@ -1,10 +1,10 @@
-import { messageBuffer } from '../services/buffer.js'; // Assuming this exists based on context
-import { ai } from '../services/openai.js'; // Assuming an AI service exists
+import { bufferService } from '../storage/buffer.js';
+import { geminiService } from '../services/gemini.js';
 
 export const psychoCommand = async (ctx) => {
   try {
     const chatId = ctx.chat.id;
-    const messages = messageBuffer.getMessages(chatId);
+    const messages = bufferService.getBuffer(chatId);
 
     if (!messages || messages.length === 0) {
       return ctx.reply('Слишком мало материала для диагноза. Пишите больше, пациенты!');
@@ -15,9 +15,9 @@ export const psychoCommand = async (ctx) => {
     // Group messages by user
     const userMessages = {};
     messages.forEach(msg => {
-      const username = msg.username || msg.from || 'Аноним';
+      const username = msg.from?.username || msg.from?.first_name || 'Аноним';
       if (!userMessages[username]) userMessages[username] = [];
-      userMessages[username].push(msg.text);
+      if (msg.text) userMessages[username].push(msg.text);
     });
 
     // Prepare prompt for AI
@@ -29,7 +29,7 @@ export const psychoCommand = async (ctx) => {
       prompt += `Пользователь ${user}: "${textSample}"\n`;
     }
 
-    const response = await ai.generate(prompt); // Abstracted AI call
+    const response = await geminiService.generatePrediction(prompt);
     await ctx.reply(response);
 
   } catch (error) {
