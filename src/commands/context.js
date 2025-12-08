@@ -4,13 +4,13 @@ import { contextQueryPrompt } from '../prompts/index.js';
 import { formatMessageForAI, safeReply } from '../utils/telegram.js';
 
 export function setupContextCommand(bot) {
-  bot.command('sc', async (ctx) => {
+  bot.command('askchat', async (ctx) => {
     const chatId = ctx.chat.id;
     const input = ctx.message?.text ?? '';
-    const query = input.replace(/^\/sc(@\w+)?/i, '').trim();
+    const query = input.replace(/^\/askchat(@\w+)?/i, '').trim();
 
     if (!query) {
-      return ctx.reply('🧠 Использование: /sc ваш вопрос\n\nПример: /sc Что решили по последнему обсуждению?');
+      return ctx.reply('🧠 Использование: /askchat ваш вопрос\n\nПример: /askchat Что решили по последнему обсуждению?');
     }
 
     const buffer = bufferService.getBuffer(chatId);
@@ -29,7 +29,7 @@ export function setupContextCommand(bot) {
         parse_mode: 'Markdown'
       });
     } catch (error) {
-      console.error('❌ Ошибка команды /sc:', error);
+      console.error('❌ Ошибка команды /askchat:', error);
       await ctx.reply('❗ Не удалось обработать запрос, попробуйте позже.');
     }
   });
