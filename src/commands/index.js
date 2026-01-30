@@ -14,6 +14,8 @@ import { setupCallbackHandler } from './callbacks.js';
 import { setupContextCommand } from './context.js';
 import { psychoCommand } from './psycho.js';
 import { dramaCommand } from './drama.js';
+import { quoteCommand } from './quote.js';
+import { judgeCommand } from './judge.js';
 
 export const setupAllCommands = (bot) => {
   // Команды
@@ -31,6 +33,8 @@ export const setupAllCommands = (bot) => {
   setupContextCommand(bot);
   bot.command('psycho', psychoCommand);
   bot.command('drama', dramaCommand);
+  bot.command('quote', quoteCommand);
+  bot.command('judge', judgeCommand);
 
   // Обработчики
   setupMessageHandler(bot);
