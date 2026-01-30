@@ -17,6 +17,7 @@ import { dramaCommand } from './drama.js';
 import { quoteCommand } from './quote.js';
 import { judgeCommand } from './judge.js';
 import { timelineCommand } from './timeline.js';
+import { speakAsCommand } from './speakas.js';
 
 export const setupAllCommands = (bot) => {
   // Команды
@@ -37,6 +38,7 @@ export const setupAllCommands = (bot) => {
   bot.command('quote', quoteCommand);
   bot.command('judge', judgeCommand);
   bot.command('timeline', timelineCommand);
+  bot.command('speakas', speakAsCommand);
 
   // Обработчики
   setupMessageHandler(bot);
