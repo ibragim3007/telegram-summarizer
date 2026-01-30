@@ -16,6 +16,7 @@ import { psychoCommand } from './psycho.js';
 import { dramaCommand } from './drama.js';
 import { quoteCommand } from './quote.js';
 import { judgeCommand } from './judge.js';
+import { timelineCommand } from './timeline.js';
 
 export const setupAllCommands = (bot) => {
   // Команды
@@ -35,6 +36,7 @@ export const setupAllCommands = (bot) => {
   bot.command('drama', dramaCommand);
   bot.command('quote', quoteCommand);
   bot.command('judge', judgeCommand);
+  bot.command('timeline', timelineCommand);
 
   // Обработчики
   setupMessageHandler(bot);
