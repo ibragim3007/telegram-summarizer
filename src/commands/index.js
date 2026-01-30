@@ -13,6 +13,7 @@ import { setupMessageHandler } from './messages.js';
 import { setupCallbackHandler } from './callbacks.js';
 import { setupContextCommand } from './context.js';
 import { psychoCommand } from './psycho.js';
+import { dramaCommand } from './drama.js';
 
 export const setupAllCommands = (bot) => {
   // Команды
@@ -29,6 +30,7 @@ export const setupAllCommands = (bot) => {
   setupRemindCommand(bot);
   setupContextCommand(bot);
   bot.command('psycho', psychoCommand);
+  bot.command('drama', dramaCommand);
 
   // Обработчики
   setupMessageHandler(bot);
