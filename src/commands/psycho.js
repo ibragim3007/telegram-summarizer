@@ -36,7 +36,7 @@ export const psychoCommand = async (ctx) => {
     prompt += "Для каждого пользователя, который встречается в логе, напиши короткое 1 предложение. Стиль: прожарка (roast), цинично, как доктор Хаус или злой стендапер.\n\n";
     prompt += `Лог чата:\n${chatLog}`;
 
-    const response = await geminiService.generatePrediction(prompt);
+    const response = await geminiService.simpleQuery(prompt);
     await ctx.reply(response);
 
   } catch (error) {

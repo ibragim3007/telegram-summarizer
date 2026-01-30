@@ -6,7 +6,6 @@ import { setupSosalCommand } from './sosal.js';
 import { setupTasksCommand } from './tasks.js';
 import { setupSimpleQueryCommand } from './simple.js';
 import { setupStatsCommand } from './stats.js';
-import { setupPredictCommand } from './predict.js';
 import { setupPollCommand } from './poll.js';
 import { setupMemeCommand } from './meme.js';
 import { setupRemindCommand } from './remind.js';
@@ -25,7 +24,6 @@ export const setupAllCommands = (bot) => {
   setupTasksCommand(bot);
   setupSimpleQueryCommand(bot);
   setupStatsCommand(bot);
-  setupPredictCommand(bot);
   setupPollCommand(bot);
   setupMemeCommand(bot);
   setupRemindCommand(bot);

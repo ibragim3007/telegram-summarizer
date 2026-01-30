@@ -47,11 +47,6 @@ class BufferService {
     const buf = this.getBuffer(chatId);
     return buf.slice(-count);
   }
-
-  shouldCheckTasks(chatId) {
-    const buf = this.getBuffer(chatId);
-    return buf.length % config.buffer.taskCheckInterval === 0 && buf.length >= config.buffer.taskCheckInterval;
-  }
 }
 
 export const bufferService = new BufferService();

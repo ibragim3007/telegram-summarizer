@@ -60,30 +60,9 @@ class GeminiService {
     return result || '⚠️ Не удалось создать статистику.';
   }
 
-  async analyzeForTasks(prompt) {
-    try {
-      const result = await this.makeRequest(prompt);
-      if (!result) {
-        return { hasTask: false };
-      }
-
-      // Очищаем ответ от markdown форматирования если есть
-      const cleanResponse = result.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-      return JSON.parse(cleanResponse);
-    } catch (parseError) {
-      console.error('❌ Ошибка парсинга JSON:', parseError);
-      return { hasTask: false };
-    }
-  }
-
   async simpleQuery(prompt) {
     const result = await this.makeRequest(prompt);
     return result || '⚠️ Не удалось получить ответ от Gemini.';
-  }
-
-  async generatePrediction(prompt) {
-    const result = await this.makeRequest(prompt);
-    return result || '⚠️ Не удалось предсказать развитие чата.';
   }
 }
 

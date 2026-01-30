@@ -15,7 +15,6 @@ export const config = {
   },
   buffer: {
     maxSize: parseInt(process.env.MESSAGES_SIZE) || 1000,
-    taskCheckInterval: 10, // проверка задач каждые 10 сообщений
   },
   tasks: {
     timeout: 10 * 60 * 1000, // 10 минут для сохранения задач

@@ -28,4 +28,3 @@ process.once('SIGTERM', () => bot.stop('SIGTERM'));
 
 console.log('🤖 Telegram Summarizer Bot запущен!');
 console.log('📊 Максимальный размер буфера:', config.buffer.maxSize);
-console.log('🔍 Проверка задач каждые', config.buffer.taskCheckInterval, 'сообщений');

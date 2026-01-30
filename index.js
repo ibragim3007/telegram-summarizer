@@ -205,47 +205,6 @@ bot.on('message', async ctx => {
 
   buf.push(messageObj);
 
-  // Проверяем на задачи каждые 10 сообщений
-  if (buf.length % 10 === 0 && buf.length >= 10) {
-    const last10Messages = buf.slice(-10).map(m => formatMessageForAI(m)).join('\n');
-    const taskAnalysis = await analyzeForTasks(last10Messages);
-
-
-    if (taskAnalysis.hasTask && taskAnalysis.priority === 'high') {
-      const taskData = {
-        taskText: taskAnalysis.taskText,
-        author: taskAnalysis.author,
-        priority: taskAnalysis.priority,
-        chatId: chatId
-      };
-
-      // Генерируем короткий ID для задачи
-      const taskId = `task_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
-      pendingTasks.set(taskId, taskData);
-
-
-      // Удаляем задачу через 10 минут, если она не была сохранена
-      setTimeout(() => {
-        pendingTasks.delete(taskId);
-      }, 10 * 60 * 1000);
-
-      await safeReply(ctx,
-        `🚨 **ВАЖНАЯ ЗАДАЧА ОБНАРУЖЕНА!**\n\n` +
-        `📝 ${taskAnalysis.taskText}\n` +
-        `👤 Автор: ${taskAnalysis.author}\n` +
-        `⚡ Приоритет: 🔴 Высокий`,
-        {
-          parse_mode: 'Markdown',
-          reply_markup: {
-            inline_keyboard: [[
-              { text: '💾 Сохранить задачу', callback_data: `save_${taskId}` }
-            ]]
-          }
-        }
-      );
-    }
-  }
-
   if (buf.length < SIZE) {
     buffers.set(chatId, buf);
     return;
@@ -570,45 +529,6 @@ async function generateChatStats(messages) {
   }
 }
 
-async function analyzeForTasks(messages) {
-  try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${googleGeminiApi}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              {
-                text: getTaskDetectionPrompt(messages),
-              }
-            ]
-          }
-        ]
-      })
-    });
-
-    const data = await response.json();
-
-    if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-      const responseText = data.candidates[0].content.parts[0].text.trim();
-      try {
-        // Очищаем ответ от markdown форматирования если есть
-        const cleanResponse = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-        return JSON.parse(cleanResponse);
-      } catch (parseError) {
-        console.error('❌ Ошибка парсинга JSON:', parseError);
-        return { hasTask: false };
-      }
-    } else {
-      console.error('⚠️ Gemini API error:', data);
-      return { hasTask: false };
-    }
-  } catch (error) {
-    console.error('❌ Ошибка анализа задач:', error);
-    return { hasTask: false };
-  }
-}
 
 async function saveTaskToFile(chatId, taskData) {
   try {
@@ -790,41 +710,6 @@ const getSosalJokePrompt = (userName, chatText) => `
 ${chatText}
 `;
 
-const getTaskDetectionPrompt = (messages) => `
-Ты — бот-анализатор Telegram чата, который ищет только задачи и планы.
-
-ВНИМАНИЕ: Будь очень избирательным! Показывай ТОЛЬКО важные задачи.
-
-Анализируй сообщения и определи, есть ли в них:
-- задания с дедлайнами 
-- важные деловые договоренности или встречи
-- конкретные планы с датами и временем
-- серьезные обязательства или поручения
-
-НЕ ПОКАЗЫВАЙ:
-- Обычные повседневные планы ("пойдем поесть", "встретимся где-то")
-- Неопределенные идеи ("было бы неплохо", "может быть")
-- Шутливые предложения
-- Обычные дружеские встречи без важности
-
-ВАЖНО: Отвечай ТОЛЬКО в формате JSON.
-
-Если найдена ВАЖНАЯ задача:
-{
-  "hasTask": true,
-  "taskText": "краткое описание ВАЖНОЙ задачи",
-  "author": "имя автора",
-  "priority": "high"
-}
-
-Если задач нет или они НЕ КРИТИЧНЫ, ВСЕГДА верни:
-{
-  "hasTask": false
-}
-
-Сообщения для анализа:
-${messages}
-`;
 
 const getStatsPrompt = (stats) => `
 Ты — аналитик Telegram чата. Создай красивую и информативную статистику на основе данных:
