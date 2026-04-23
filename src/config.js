@@ -7,7 +7,7 @@ export const config = {
   },
   gemini: {
     apiKey: process.env.GOOGLE_GEMINI_API,
-    model: 'gemini-2.0-flash',
+    model: 'gemini-3.1-flash-live-preview',
   },
   imgflip: {
     username: process.env.IMGFLIP_USERNAME || 'imgflip_hubot',

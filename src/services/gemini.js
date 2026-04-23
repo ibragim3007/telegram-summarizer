@@ -1,39 +1,22 @@
-import fetch from 'node-fetch';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { config } from '../config.js';
 
 class GeminiService {
   constructor() {
-    this.apiKey = config.gemini.apiKey;
-    this.model = config.gemini.model;
-    this.baseUrl = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`;
+    this.genAI = new GoogleGenerativeAI(config.gemini.apiKey);
+    this.model = this.genAI.getGenerativeModel({ model: config.gemini.model });
   }
 
   async makeRequest(prompt) {
     try {
-      const response = await fetch(`${this.baseUrl}?key=${this.apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt,
-                }
-              ]
-            }
-          ]
-        })
-      });
-
-      const data = await response.json();
-
-      if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
-        return data.candidates[0].content.parts[0].text.trim();
-      } else {
-        console.error('⚠️ Gemini API error:', data);
-        return null;
+      const result = await this.model.generateContent(prompt);
+      const response = result.response;
+      const text = response.text();
+      if (text) {
+        return text.trim();
       }
+      console.error('⚠️ Gemini API error: пустой ответ', response);
+      return null;
     } catch (error) {
       console.error('❌ Ошибка Gemini:', error);
       throw error;
