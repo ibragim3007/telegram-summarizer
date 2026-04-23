@@ -4,6 +4,7 @@ import { config } from './src/config.js';
 import { setupAllCommands } from './src/commands/index.js';
 import { bufferService } from './src/storage/buffer.js';
 
+// Один процесс на токен (long polling). Второй контейнер/процесс с тем же TELEGRAM_API → 409 Conflict.
 // Создаем бота
 const bot = new Telegraf(config.telegram.token);
 
